@@ -1,0 +1,4 @@
+- name: Downloads certs
+  command: "sshpass scp -P{{ansible_port}} -o StrictHostKeyChecking=no {{ansible_user}}@{{inventory_hostname}}:/cert_export_{{ item }}@{{ prefix }}.p12 ./certs/{{ inventory_hostname }}/"
+  with_items: "{{ users }}"
+

@@ -1,0 +1,2 @@
+- name: Create dir for certs
+  command: mkdir ./certs/{{ inventory_hostname }}

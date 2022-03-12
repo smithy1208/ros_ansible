@@ -1,0 +1,14 @@
+- name: Create cert for users
+  routeros_command:
+    commands:
+      - /certificate add copy-from=~tmp@{{ prefix }} name={{ item }}@{{ prefix }} common-name={{ item }}@{{ prefix }} subject-alt-name=email:{{ item }}@{{ prefix }}
+      - /certificate sign "{{ item }}@{{ prefix }}" ca=CA.{{ host }}
+      - /certificate export-certificate  "{{ item }}@{{ prefix }}" type=pkcs12 export-passphrase={{ passphrase }}
+      - /delay 3
+      - /ip ipsec identity add auth-method=digital-signature certificate={{ host }} generate-policy=port-strict match-by=certificate mode-config=modecfg-{{ prefix }} peer=peer-{{ peerip }} policy-template-group=group-{{ prefix }} remote-certificate={{ item }}@{{ prefix }} remote-id=user-fqdn:{{ item }}@{{ prefix }}
+    wait_for:
+      - result[1] contains done
+  with_items: "{{ users }}"
+
+  register: certificate_print
+

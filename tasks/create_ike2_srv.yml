@@ -1,0 +1,41 @@
+- name: Check ntp package
+  routeros_command:
+    commands:
+      - /system package print without-paging
+
+  register: ntp_result
+
+- name: debug print
+  debug: var=ntp_result.stdout_lines
+
+- name: Config sntp
+  routeros_command:
+    commands:
+      - /system clock set time-zone-autodetect=no time-zone-name={{zone}}
+      - /system ntp client set enabled=yes server-dns-names={{sntp}}
+  when: 'not "ntp" in ntp_result.stdout'
+
+
+- name: Config bridge, ip, pool, ipsec
+  routeros_command:
+    commands:
+      - /interface bridge add name={{br}}
+      - /ip address add interface={{br}} address={{brip}}/{{mask}}
+      - /ip pool add name=pool-{{prefix}} ranges={{pool}}
+      - /ip ipsec mode-config add address-pool=pool-{{prefix}} address-prefix-length=32 name=modecfg-{{prefix}} split-include=0.0.0.0/0 static-dns={{brip}} system-dns=no
+      - /ip ipsec profile add dh-group=modp2048,modp1536,modp1024 enc-algorithm=aes-256,aes-192,aes-128 hash-algorithm=sha256 name=profile-{{prefix}} nat-traversal=yes proposal-check=obey
+      - /ip ipsec peer add exchange-mode=ike2 address=0.0.0.0/0 local-address={{peerip}} name=peer-{{peerip}} passive=yes send-initial-contact=yes profile=profile-{{prefix}}
+      - /ip ipsec proposal add auth-algorithms=sha512,sha256,sha1 enc-algorithms=aes-256-cbc,aes-256-ctr,aes-256-gcm,aes-192-ctr,aes-192-gcm,aes-128-cbc,aes-128-ctr,aes-128-gcm lifetime=8h name=proposal-{{prefix}} pfs-group=none
+      - /ip ipsec policy group add name=group-{{prefix}}
+      - /ip ipsec policy add template=yes dst-address={{net}} protocol=all src-address=0.0.0.0/0 group=group-{{prefix}} proposal=proposal-{{prefix}} ipsec-protocols=esp action=encrypt
+      - /ip firewall mangle add action=change-mss chain=forward comment="IKE2 Clamp TCP MSS" ipsec-policy=in,ipsec new-mss=1300 passthrough=yes protocol=tcp src-address={{net}} tcp-flags=syn tcp-mss=!0-1300
+      - /ip firewall mangle add action=change-mss chain=forward comment="IKE2 Clamp TCP MSS" dst-address={{net}} ipsec-policy=in,ipsec new-mss=1300 passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=!0-1300
+
+  register: ike2_srv_print
+
+- name: Create dir for certs
+  file:
+    path: ./certs/{{ inventory_hostname }}
+    state: directory
+    mode: '0755'
+  #command: mkdir ./certs/{{ inventory_hostname }}

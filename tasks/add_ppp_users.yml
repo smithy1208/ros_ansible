@@ -1,0 +1,9 @@
+- name: create PPP users on RouterOS
+
+  routeros_command:
+    commands:
+
+    - /ppp secret add name={{ profile }}-{{ item }} password={{ my_pass }} profile=profile-{{ profile }} service=ovpn
+
+  with_items: "{{ users }}"
+

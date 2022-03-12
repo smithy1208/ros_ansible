@@ -1,0 +1,3 @@
+- name: Collect all facts from the device 
+  routeros_facts:
+      gather_subset: all

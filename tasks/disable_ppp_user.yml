@@ -1,0 +1,11 @@
+- name: disable PPP users on RouterOS
+
+  routeros_command:
+    commands:
+
+    - /ppp secret set [find name ~"{{item}}"] disabled=yes
+    - /ppp active remove [find name ~"{{item}}"]
+
+  with_items: "{{ users }}"
+
+  register: certificate_print

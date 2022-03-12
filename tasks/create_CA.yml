@@ -1,0 +1,22 @@
+- name: create and sing CA
+
+  routeros_command:
+    commands:
+
+      - /certificate add name=CA.{{host}} common-name=CA.{{host}} subject-alt-name="DNS:{{host}}" country={{country}} state={{state}} locality={{locality}} organization={{org}} key-size={{cakeysize}} days-valid={{cadays}} key-usage=digital-signature,key-encipherment,data-encipherment,key-cert-sign,crl-sign
+      - /certificate add copy-from=CA.{{host}} name={{host}} common-name={{host}} key-usage=tls-server key-size={{keysize}} days-valid={{srvdays}}
+      - /certificate add copy-from={{host}} name=~tmp@{{prefix}} common-name=tmp@{{prefix}} subject-alt-name="email:tmp@{{prefix}}" days-valid={{days}} key-usage=tls-client
+      - /certificate sign CA.{{host}}
+      - /certificate sign {{host}} ca=CA.{{host}}
+      - /certificate set {{host}} trusted=yes
+      - /certificate export-certificate CA.{{host}} type=pem
+      - /certificate export-certificate CA.{{host}} type=pkcs12 export-passphrase={{passphrase}}
+      - /certificate export-certificate {{host}} type=pkcs12 export-passphrase={{passphrase}}
+      - /certificate print
+      - /file print
+
+    wait_for:
+      - result[3] contains done
+      - result[4] contains done
+       
+  register: certificate_print

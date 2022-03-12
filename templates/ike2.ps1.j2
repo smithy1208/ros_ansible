@@ -1,0 +1,6 @@
+Add-VpnConnection -name {{ item }}@{{ prefix }} -ServerAddress {{ host }} -TunnelType Ikev2 -EncryptionLevel Maximum -AuthenticationMethod MachineCertificate -SplitTunneling
+#$PSScriptRoot 
+certUtil -importPFX -f -Enterprise -p "{{ passphrase }}" CA $PSScriptRoot/cert_export_{{ item }}@{{ prefix }}.p12
+certUtil -importPFX -f -p "{{ passphrase }}" my $PSScriptRoot/cert_export_{{ item }}@{{ prefix }}.p12
+#Remove-Item $PSScriptRoot/cert_export_{{ item }}@{{ prefix }}.p12
+#Remove-Item $PSScriptRoot/{{ item }}.ps1

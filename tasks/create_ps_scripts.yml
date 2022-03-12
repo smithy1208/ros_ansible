@@ -1,0 +1,16 @@
+- name: Create PS script from template
+  template:
+    src=templates/ike2.ps1.j2
+    dest=certs/{{ inventory_hostname }}/ike2_{{item}}@{{prefix}}.ps1
+  delegate_to: 127.0.0.1
+  with_items: "{{ users }}"
+
+- name: Create a bz2 archive
+  archive:
+    path:
+    - certs/{{ inventory_hostname }}/ike2_{{item}}@{{prefix}}.ps1
+    - certs/{{ inventory_hostname }}/cert_export_{{item}}@{{prefix}}.p12
+    dest: certs/{{ inventory_hostname }}/{{item}}@{{prefix}}.tbz2
+    format: bz2
+  with_items: "{{ users }}"
+
